@@ -14,18 +14,34 @@ import axios from 'axios';
 
 const HomeScreen = () => {
   const {control, handleSubmit, reset} = useForm({
-    //defaultValues: {artist: 'Coldplay', title: 'Adventure of a Lifetime'},
+    // defaultValues: {artist: 'Coldplay', title: 'Adventure of a Lifetime'},
   });
-  const [lyrcis, setLyrcis] = useState('');
+  const [lyrics, setLyrics] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
 
   const onSearchPressed = data => {
+    setLyrics('');
+
+    const lyricsFromHoistory = searchHistory.find(
+      s => s.artist === data.artist && s.title === data.title,
+    )?.lyrics;
+
+    if (lyricsFromHoistory) {
+      setLyrics(lyricsFromHoistory);
+      return;
+    }
+
     setIsLoading(true);
-    setLyrcis('');
+
     axios
       .get(`https://api.lyrics.ovh/v1/${data.artist}/${data.title}`)
       .then(resp => {
-        setLyrcis(resp.data.lyrics);
+        setLyrics(resp.data.lyrics);
+        setSearchHistory([
+          ...searchHistory,
+          {artist: data.artist, title: data.title, lyrics: resp.data.lyrics},
+        ]);
       })
       .catch(error => {
         if (error.response?.status === 404) {
@@ -41,7 +57,7 @@ const HomeScreen = () => {
 
   const onResetPressed = () => {
     reset();
-    setLyrcis('');
+    setLyrics('');
   };
 
   return (
@@ -70,7 +86,7 @@ const HomeScreen = () => {
       )}
 
       <ScrollView style={styles.scrollview}>
-        <Text>{lyrcis}</Text>
+        <Text>{lyrics}</Text>
       </ScrollView>
     </View>
   );
